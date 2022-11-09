@@ -286,7 +286,8 @@ class PupilApplication(QMainWindow):
         self.pushButton_3.clicked.connect(self.clickBtn3)
         self.pushButton.clicked.connect(self.clickBtn)
         self.calendarWidget = QtWidgets.QCalendarWidget()
-        self.calendarWidget.clicked['QDate'].connect(self.show_date_func)
+        self.calendarWidget.selectionChanged.connect(self.show_date_func)
+        #self.calendarWidget.clicked['QDate'].connect(self.show_date_func)
         self.date = None
         self.user = user
         self.teacher = teacher
@@ -294,7 +295,7 @@ class PupilApplication(QMainWindow):
         self.cur1 = self.users.cursor()
         self.inf = self.cur1.execute(f"SELECT * from users where pupillogin='{self.user}'").fetchone()
         self.name, self.surname = self.inf[2], self.inf[3]
-        self.label.setText(str(self.name + ' ' + self.surname))
+        self.label_4.setText(str(self.name + ' ' + self.surname))
         self.show()
 
     def clickBtn1(self):
@@ -310,11 +311,11 @@ class PupilApplication(QMainWindow):
         print('date')
 
     def show_date_func(self):
-        #while self.calendarWidget:
-            #if self.calendarWidget.clicked():
         date = self.calendarWidget.selectedDate()
+        local_date = date.toString().split(' ')
+        weekday, month, day, year = local_date
         self.date = date.toString('yyyy-MM-dd')
-                #self.label_5.setText(self.date)
+        self.lcdNumber.display('%s %s %s' % (year, month, day))
         self.calendarWidget.hide()
 
     def clickBtn3(self):
@@ -365,6 +366,7 @@ class RegWin(QMainWindow):
         self.pushButton.clicked.connect(self.clickBtn1)
         self.pushButton_2.clicked.connect(self.clickBtn2)
         self.a = None
+        self.teacher = None
         self.show()
 
     def clickBtn1(self):
@@ -377,6 +379,7 @@ class RegWin(QMainWindow):
             msg.show()
         elif login[4].strip() == self.lineEdit_12.text():
             print('ok')
+            self.teacher = str(login[3])
             self.openTeacherEntrance()
         print(1)
 
@@ -386,7 +389,7 @@ class RegWin(QMainWindow):
 
     def openTeacherEntrance(self):
         self.hide()
-        self.a = TeacherEntrance()
+        self.a = TeacherEntrance(self.teacher)
 
     def openTeacherCheckin(self):
         self.hide()
@@ -436,21 +439,22 @@ class TeacherCheckin(QMainWindow):
         inp = (self.lineEdit.text(), self.lineEdit_2.text(), self.lineEdit_4.text(), self.lineEdit_3.text(), self.lineEdit_6.text(), self.lineEdit_5.text(), 'avatar_default.jpg')
         print(inp)
         if self.password(self.lineEdit_3.text(), self.lineEdit_6.text()):
+            teacher = self.lineEdit_3.text()
             cur1.execute(f"INSERT INTO teachers (teachersurname, teachername, teachername2, teacherlogin, teacherpassword, email, avatarfile) VALUES(?, ?, ?, ?, ?, ?, ?)", inp)
             teachers.commit()
-            self.teacherAddPupil()
+            self.teacherAddPupil(teacher)
 
-    def teacherAddPupil(self):
+    def teacherAddPupil(self, teacher):
         self.hide()
-        self.a = TeacherAddPupil(self.lineEdit_3.text())
+        self.a = TeacherAddPupil(teacher)
 
 
 class TeacherAddPupil(QMainWindow):
-    def __init__(self, user):
+    def __init__(self, teacher):
         super().__init__()
         uic.loadUi('teacher_add_class.ui', self)
         self.show()
-        self.user = user
+        self.teacher = teacher
         self.pushButton.clicked.connect(self.clickBtn)
         self.pushButton_2.clicked.connect(self.openFile)
         self.users = sqlite3.connect("users.sqlite")
@@ -464,7 +468,7 @@ class TeacherAddPupil(QMainWindow):
 
     def openTeacherEntrance(self):
         self.hide()
-        self.a = TeacherEntrance()
+        self.a = TeacherEntrance(self.teacher)
 
     def generate_random_login(self):
         characters = list(string.ascii_letters + string.digits)
@@ -512,9 +516,16 @@ class TeacherAddPupil(QMainWindow):
 
 
 class TeacherEntrance(QMainWindow):
-    def __init__(self):
+    def __init__(self, teacher):
         super().__init__()
         uic.loadUi('teacher_main.ui', self)
+        self.teacher = teacher
+        print(self.teacher)
+        self.teachers = sqlite3.connect('teachers.sqlite')
+        self.cur1 = self.teachers.cursor()
+        self.inf = self.cur1.execute(f"SELECT * from teachers where teacherlogin='{self.teacher}'").fetchone()
+        self.name, self.surname = self.inf[1], self.inf[0]
+        self.label.setText(str(self.name + ' ' + self.surname))
         self.pushButton_4.clicked.connect(self.clickBtn3)
         self.pushButton.clicked.connect(self.clickBtn9)
         self.show()
@@ -525,7 +536,7 @@ class TeacherEntrance(QMainWindow):
 
     def checkInquary(self):
         self.hide()
-        self.a = TeacherCheckInquary()
+        self.a = TeacherCheckInquary(self.teacher)
 
     def clickBtn9(self):
         print(3)
@@ -536,9 +547,15 @@ class TeacherEntrance(QMainWindow):
 
 
 class TeacherCheckInquary(QMainWindow):
-    def __init__(self):
+    def __init__(self, teacher):
         super().__init__()
         uic.loadUi('teacher_application.ui', self)
+        self.teacher = teacher
+        self.teachers = sqlite3.connect('teachers.sqlite')
+        self.cur1 = self.teachers.cursor()
+        self.inf = self.cur1.execute(f"SELECT * from teachers where teacherlogin='{self.teacher}'").fetchone()
+        self.name, self.surname = self.inf[1], self.inf[0]
+        self.label_4.setText(str(self.name + ' ' + self.surname))
         self.show()
         self.pushButton_3.clicked.connect(self.clickBtn3)
         self.pushButton_4.clicked.connect(self.clickBtn4)

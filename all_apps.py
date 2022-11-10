@@ -252,7 +252,7 @@ class PupilApplication(QMainWindow):
         self.openMainPupil()
 
     def changeAvatar(self):
-        self.a = Avatar()
+        self.a = Avatar(self.user, 'u')
 
     def openMainPupil(self):
         self.hide()

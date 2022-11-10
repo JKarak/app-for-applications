@@ -18,31 +18,8 @@ from PyQt5.QtWidgets import (QPushButton, QApplication,
                              QMessageBox, QLineEdit)
 from PyQt5 import uic, QtCore, QtWidgets
 
+apps = sqlite3.connect('apps.sqlite')
+cur = apps.cursor()
 
-class TeacherEntrance(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        uic.loadUi('teacher_main_new.ui', self)
-        self.pushButton_3.clicked.connect(self.clickBtn3)
-        self.pushButton_6.clicked.connect(self.clickBtn6)
-        self.pushButton_5.clicked.connect(self.clickBtn5)
-        self.show()
-
-    def clickBtn6(self):
-        print(3)
-        #self.changeAvatar()
-
-    def clickBtn3(self):
-        print(1)
-        #self.checkInquary()
-
-    def clickBtn5(self):
-        print(5)
-        #self.checkInquary()
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    win = TeacherEntrance()
-    win.show()
-    app.exec_()
+pampam = list(cur.execute("SELECT * FROM apps WHERE teacherlogin='zhuy@mail.ru'"))
+print(pampam)

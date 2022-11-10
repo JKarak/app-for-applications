@@ -228,12 +228,29 @@ class PupilMain(QMainWindow):
         self.pushButton_5.clicked.connect(self.clickBtn1)
         self.pushButton_2.clicked.connect(self.clickBtn2)
         self.pushButton_3.clicked.connect(self.clickBtn3)
-        self.table = QTableWidget()
-        self.btn = QPushButton(self.table)
-        self.table.setCellWidget(0, 2, self.btn)
+        self.apps = sqlite3.connect('apps.sqlite')
+        self.cur2 = self.apps.cursor()
+        apps_list = list(self.cur2.execute(f"SELECT * FROM apps WHERE pupillogin='{user}'"))
+        print(apps_list)
+        for i in range(len(apps_list)):
+            self.tableWidget.insertRow(i)
+            ava = self.cur1.execute(f"SELECT avatarfile from users WHERE pupillogin='{apps_list[i][1]}'")
+            user_name = str(self.name + ' ' + self.surname)
+            status = apps_list[i][7]
+            self.label = QLabel(self.tableWidget)
+            self.label.setText('avatar_default.jpg')
+            self.tableWidget.setCellWidget(-1, 0, self.label)
+            self.label_1 = QLabel(self.tableWidget)
+            self.label_1.setText(user_name)
+            self.tableWidget.setCellWidget(-1, 1, self.label_1)
+            self.btn = QPushButton(self.tableWidget)
+            self.btn.setText(status)
+            self.tableWidget.setCellWidget(-1, 2, self.btn)
         self.user = user
         self.teacher = teacher
         self.show()
+
+    #def table_building(self):
 
     def clickBtn1(self):
         print(3)
@@ -318,6 +335,9 @@ class PupilApplication(QMainWindow):
         self.teacher = teacher
         self.users = sqlite3.connect('users.sqlite')
         self.cur1 = self.users.cursor()
+        self.apps = sqlite3.connect('apps.sqlite')
+        self.cur2 = self.apps.cursor()
+        #new_apps =
         self.inf = self.cur1.execute(f"SELECT * from users where pupillogin='{self.user}'").fetchone()
         self.name, self.surname = self.inf[2], self.inf[3]
         self.label_4.setText(str(self.name + ' ' + self.surname))

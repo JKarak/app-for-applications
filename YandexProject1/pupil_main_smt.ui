@@ -105,17 +105,24 @@
             <x>30</x>
             <y>30</y>
             <width>921</width>
-            <height>91</height>
+            <height>402</height>
            </rect>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
             <widget class="QTableWidget" name="tableWidget">
-             <row>
-              <property name="text">
-               <string>1</string>
-              </property>
-             </row>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>600</width>
+               <height>400</height>
+              </size>
+             </property>
              <column>
               <property name="text">
                <string>Аватар</string>
@@ -131,16 +138,6 @@
                <string>Статус заявки</string>
               </property>
              </column>
-             <item row="0" column="0">
-              <property name="text">
-               <string>Аватар</string>
-              </property>
-             </item>
-             <item row="0" column="1">
-              <property name="text">
-               <string>Алина</string>
-              </property>
-             </item>
             </widget>
            </item>
            <item>

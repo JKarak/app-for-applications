@@ -114,6 +114,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="pushButton_5">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="font">
            <font>
             <pointsize>12</pointsize>
@@ -124,6 +130,18 @@
           </property>
           <property name="autoRepeat">
            <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Обновить</string>
           </property>
          </widget>
         </item>
@@ -175,7 +193,7 @@
            <x>0</x>
            <y>0</y>
            <width>974</width>
-           <height>413</height>
+           <height>373</height>
           </rect>
          </property>
          <widget class="QWidget" name="layoutWidget">

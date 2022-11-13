@@ -73,6 +73,18 @@
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_3">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Обновить</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
@@ -112,7 +124,7 @@
          <x>0</x>
          <y>0</y>
          <width>983</width>
-         <height>395</height>
+         <height>355</height>
         </rect>
        </property>
        <widget class="QWidget" name="layoutWidget">

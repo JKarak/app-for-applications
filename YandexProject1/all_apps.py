@@ -231,6 +231,7 @@ class PupilMain(QMainWindow):
         self.pushButton_5.clicked.connect(self.clickBtn1)
         self.pushButton_2.clicked.connect(self.clickBtn2)
         self.pushButton_3.clicked.connect(self.clickBtn3)
+        self.pushButton.clicked.connect(self.clickBtn)
         self.apps = sqlite3.connect('apps.sqlite')
         self.cur2 = self.apps.cursor()
         self.teachers = sqlite3.connect('teachers.sqlite')
@@ -263,7 +264,7 @@ class PupilMain(QMainWindow):
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.resizeRowsToContents()
 
-    # Если статус заявки "Отклонена", ученик может просмотреть прчину отказа
+    # Если статус заявки "Отклонена", ученик может просмотреть причину отказа
     def see_reason(self):
         message = f'Причина отказа:\n "{str(self.reason)}"'
         msg = QMessageBox(QMessageBox.Information, '', message, parent=self)
@@ -281,6 +282,12 @@ class PupilMain(QMainWindow):
 
     def changeAvatar(self):
         self.a = Avatar(self.user, 'u')
+
+    def clickBtn(self):
+        ava = str(self.cur1.execute(f"""SELECT avatarfile from users WHERE pupillogin='{self.user}'""").fetchone()[0])
+        pixmap = QPixmap(ava)
+        self.label_6.setPixmap(pixmap)
+        self.label_6.setFixedSize(60, 60)
 
     def application(self):
         self.b = PupilApplication(self.user, self.teacher)
@@ -334,6 +341,10 @@ class Avatar(QWidget):
         elif self.caller == 't':
             self.cur2.execute(f"UPDATE teachers SET avatarfile='avatar_default.jpg' WHERE teacherlogin='{self.user}'")
             self.teachers.commit()
+        ava = 'avatar_default.jpg'
+        pixmap = QPixmap(ava)
+        self.label.setPixmap(pixmap)
+        self.label.setFixedSize(60, 60)
 
     def clickBtn4(self):
         if self.caller == 'u':
@@ -342,6 +353,10 @@ class Avatar(QWidget):
         elif self.caller == 't':
             self.cur2.execute(f"UPDATE teachers SET avatarfile='avatar2.jpg' WHERE teacherlogin='{self.user}'")
             self.teachers.commit()
+        ava = 'avatar2.jpg'
+        pixmap = QPixmap(ava)
+        self.label.setPixmap(pixmap)
+        self.label.setFixedSize(60, 60)
 
     def clickBtn3(self):
         if self.caller == 'u':
@@ -350,6 +365,10 @@ class Avatar(QWidget):
         elif self.caller == 't':
             self.cur2.execute(f"UPDATE teachers SET avatarfile='avatar4.jpg' WHERE teacherlogin='{self.user}'")
             self.teachers.commit()
+        ava = 'avatar4.jpg'
+        pixmap = QPixmap(ava)
+        self.label.setPixmap(pixmap)
+        self.label.setFixedSize(60, 60)
 
     def clickBtn9(self):
         self.hide()
@@ -359,11 +378,12 @@ class Avatar(QWidget):
 class PupilApplication(QMainWindow):
     def __init__(self, user, teacher):
         super().__init__()
-        uic.loadUi('pupil_application_new.ui', self)
+        uic.loadUi('pupil_application_newnew.ui', self)
         self.pushButton_5.clicked.connect(self.clickBtn1)
-        self.pushButton_4.clicked.connect(self.clickBtn2)
+        self.pushButton_4.clicked.connect(self.clickBtn4)
         self.pushButton_3.clicked.connect(self.clickBtn3)
         self.pushButton.clicked.connect(self.clickBtn)
+        self.pushButton_2.clicked.connect(self.clickBtn2)
         self.calendarWidget = QtWidgets.QCalendarWidget()
         self.calendarWidget.clicked['QDate'].connect(self.show_date_func)
         self.date = None
@@ -381,10 +401,16 @@ class PupilApplication(QMainWindow):
         self.label_6.setFixedSize(60, 60)
         self.show()
 
+    def clickBtn2(self):
+        ava = str(self.cur1.execute(f"""SELECT avatarfile from users WHERE pupillogin='{self.user}'""").fetchone()[0])
+        pixmap = QPixmap(ava)
+        self.label_6.setPixmap(pixmap)
+        self.label_6.setFixedSize(60, 60)
+
     def clickBtn1(self):
         self.changeAvatar()
 
-    def clickBtn2(self):
+    def clickBtn4(self):
         sys.exit()
 
     def clickBtn(self):
@@ -638,6 +664,7 @@ class TeacherEntrance(QMainWindow):
         self.cur1 = self.users.cursor()
         self.pushButton.clicked.connect(self.clickBtn9)
         self.pushButton_2.clicked.connect(self.clickBtn2)
+        self.pushButton_3.clicked.connect(self.clickBtn3)
         self.apps = sqlite3.connect('apps.sqlite')
         self.cur2 = self.apps.cursor()
         self.teachers = sqlite3.connect('teachers.sqlite')
@@ -674,6 +701,12 @@ class TeacherEntrance(QMainWindow):
         self.tableWidget.resizeRowsToContents()
         self.show()
 
+    def clickBtn3(self):
+        ava = str(self.cur1.execute(f"""SELECT avatarfile from teachers WHERE teacherlogin='{self.teacher}'""").fetchone()[0])
+        pixmap = QPixmap(ava)
+        self.label_3.setPixmap(pixmap)
+        self.label_3.setFixedSize(60, 60)
+
     def checkInquary(self):
         self.hide()
         self.a = TeacherCheckInquary(self.teacher, self.data)
@@ -707,6 +740,7 @@ class TeacherCheckInquary(QMainWindow):
         self.pushButton_4.clicked.connect(self.clickBtn4)
         self.pushButton_6.clicked.connect(self.clickBtn6)
         self.pushButton_5.clicked.connect(self.clickBtn5)
+        self.pushButton.clicked.connect(self.clickBtn)
         self.label_6.setText(self.data[2])
         self.label_9.setText(self.data[3])
         self.label_8.setText(self.data[4])
@@ -716,6 +750,12 @@ class TeacherCheckInquary(QMainWindow):
         self.show()
         self.le = QLineEdit(self)
         self.le.move(130, 22)
+
+    def clickBtn(self):
+        ava = str(self.cur1.execute(f"""SELECT avatarfile from teachers WHERE teacherlogin='{self.teacher}'""").fetchone()[0])
+        pixmap = QPixmap(ava)
+        self.label_5.setPixmap(pixmap)
+        self.label_5.setFixedSize(60, 60)
 
     def clickBtn3(self):
         self.approveInquary()

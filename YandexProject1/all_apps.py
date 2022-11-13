@@ -3,23 +3,17 @@ import traceback
 import sqlite3
 import smtplib
 from email.mime.text import MIMEText
-from email.header    import Header
+from email.header import Header
 import string
 import random
-
-
-from PIL import Image
-from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
-from PyQt5.QtWidgets import QTableView, QComboBox, QTableWidgetItem, QTableWidget
-from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QPushButton, QApplication,
-                             QSizePolicy, QWidget,
-                             QMainWindow, QWidgetItem,
-                             QFileDialog, QLabel,
-                             QDialog, QInputDialog,
+                             QWidget, QMainWindow,
+                             QFileDialog, QLabel, QInputDialog,
                              QMessageBox, QLineEdit)
-from PyQt5 import uic, QtCore, QtWidgets
+from PyQt5 import uic, QtWidgets
+from docxtpl import DocxTemplate
 
 
 def excepthook(exc_type, exc_value, exc_tb):
@@ -77,7 +71,6 @@ class RoleWindow(QMainWindow):
                 """)
         self.apps.commit()
 
-
     def clickBtn1(self):
         print(1)
         if self.comboBox.currentText() == 'Учитель':
@@ -100,7 +93,7 @@ class RoleWindow(QMainWindow):
 class PupilEntrance(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('pupil_entrance.ui', self)
+        uic.loadUi('pupil_entrance_new.ui', self)
         self.pushButton.clicked.connect(self.clickBtn1)
         self.pushButton_2.clicked.connect(self.clickBtn2)
         self.user = None
@@ -110,12 +103,12 @@ class PupilEntrance(QMainWindow):
     def clickBtn1(self):
         users = sqlite3.connect("users.sqlite")
         cur1 = users.cursor()
-        login = cur1.execute(f"SELECT * from users where pupillogin='{self.lineEdit_4.text()}'").fetchone()
+        login = cur1.execute(f"SELECT * from users where pupillogin='{self.lineEdit_4.text().strip()}'").fetchone()
         print(login)
         if login is None:
             self.openEntranceError()
-        elif login[1] == self.lineEdit_7.text():
-            self.user = self.lineEdit_4.text()
+        elif login[1] == self.lineEdit_7.text().strip():
+            self.user = self.lineEdit_4.text().strip()
             self.teacher = login[5]
             self.openMainPupil()
 
@@ -133,7 +126,7 @@ class PupilEntrance(QMainWindow):
 class EntranceError(QWidget):
     def __init__(self):
         super().__init__()
-        uic.loadUi('pupil_error_entrance.ui', self)
+        uic.loadUi('pupil_error_entrance_new.ui', self)
         self.pushButton.clicked.connect(self.clickBtn1)
         self.pushButton_2.clicked.connect(self.clickBtn2)
         self.show()
@@ -150,7 +143,7 @@ class EntranceError(QWidget):
 class AppForRecovery(QWidget):
     def __init__(self):
         super().__init__()
-        uic.loadUi('pupil_password_recovery.ui', self)
+        uic.loadUi('pupil_password_recovery_new.ui', self)
         self.pushButton.clicked.connect(self.clickBtn1)
         self.new_login = 'login'
         self.new_password = 'password'
@@ -170,10 +163,15 @@ class AppForRecovery(QWidget):
                               'Некорректный адрес электронной почты. \nПопробуйте ещё раз.', parent=self)
             msg.show()
         else:
+            self.generate_random_login()
+            self.generate_random_password()
             if self.send_new_password(string) == 'ok':
                 msg = QMessageBox(QMessageBox.Information, '',
                                   'Письмо с новым логином и паролем \n отправлены на Вашу почту\n Если письмо не пришло, \nпроверьте папку "Спам"', parent=self)
-                #self.cur1.execute("DELETE FROM ")
+                print(self.new_login)
+                print(self.new_password)
+                self.cur1.execute(f"UPDATE users SET pupillogin='{self.new_login}', pupilpassword='{self.new_password}' WHERE pupilemail='{string}'")
+                self.users.commit()
                 msg.show()
                 self.hide()
             else:
@@ -205,7 +203,6 @@ class AppForRecovery(QWidget):
         smtpObj = smtplib.SMTP('smtp.mail.ru', 587)
         smtpObj.starttls()
         smtpObj.login("aqwertyamkr@mail.ru", "8vEyhKXqTQMkb8SiJ9VT")
-        #m = 'pamparam'
         m = f"""Ваш новый логин: {self.new_login}\nПароль: {self.new_password}\n\nНе сообщайте никому эти данные в целях безопасности!"""
         subject = 'Новый логин и пароль'
         msg = MIMEText(m, 'plain', 'utf-8')
@@ -219,38 +216,56 @@ class AppForRecovery(QWidget):
 class PupilMain(QMainWindow):
     def __init__(self, user, teacher):
         super().__init__()
-        uic.loadUi('pupil_main_smt.ui', self)
+        uic.loadUi('pupil_main_new.ui', self)
         self.users = sqlite3.connect('users.sqlite')
         self.cur1 = self.users.cursor()
         self.inf = self.cur1.execute(f"SELECT * from users where pupillogin='{user}'").fetchone()
         self.name, self.surname = self.inf[2], self.inf[3]
         self.label.setText(str(self.name + ' ' + self.surname))
+        pixmap = QPixmap(self.inf[6])
+        self.label_6.setPixmap(pixmap)
+        self.label_6.setFixedSize(60, 60)
         self.pushButton_5.clicked.connect(self.clickBtn1)
         self.pushButton_2.clicked.connect(self.clickBtn2)
         self.pushButton_3.clicked.connect(self.clickBtn3)
         self.apps = sqlite3.connect('apps.sqlite')
         self.cur2 = self.apps.cursor()
+        self.teachers = sqlite3.connect('teachers.sqlite')
+        self.cur3 = self.teachers.cursor()
         apps_list = list(self.cur2.execute(f"SELECT * FROM apps WHERE pupillogin='{user}'"))
+        self.reason = None
         print(apps_list)
         for i in range(len(apps_list)):
             self.tableWidget.insertRow(i)
-            ava = self.cur1.execute(f"SELECT avatarfile from users WHERE pupillogin='{apps_list[i][1]}'")
-            user_name = str(self.name + ' ' + self.surname)
+            inf = self.cur3.execute(f"SELECT * from teachers WHERE teacherlogin='{teacher}'").fetchone()
+            ava = str(inf[6])
+            print(str(ava))
+            user_name = str(inf[1] + ' ' + inf[0])
             status = apps_list[i][7]
             self.label = QLabel(self.tableWidget)
-            self.label.setText('avatar_default.jpg')
-            self.tableWidget.setCellWidget(-1, 0, self.label)
-            self.label_1 = QLabel(self.tableWidget)
-            self.label_1.setText(user_name)
-            self.tableWidget.setCellWidget(-1, 1, self.label_1)
+            pixmap = QPixmap(ava)
+            self.label.setPixmap(pixmap)
+            self.label.setFixedSize(60, 60)
+            self.tableWidget.setCellWidget(i, 0, self.label)
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(user_name))
             self.btn = QPushButton(self.tableWidget)
             self.btn.setText(status)
-            self.tableWidget.setCellWidget(-1, 2, self.btn)
+            self.tableWidget.setCellWidget(i, 2, self.btn)
+            if apps_list[i][7] == 'Отклонена':
+                print(apps_list[i][6])
+                self.reason = apps_list[i][6]
+                self.btn.clicked.connect(self.see_reason)
         self.user = user
         self.teacher = teacher
         self.show()
+        self.tableWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
 
-    #def table_building(self):
+    def see_reason(self):
+        message = f'Причина отказа:\n "{str(self.reason)}"'
+        msg = QMessageBox(QMessageBox.Information, '', message, parent=self)
+        msg.show()
 
     def clickBtn1(self):
         print(3)
@@ -275,7 +290,7 @@ class PupilMain(QMainWindow):
 class Avatar(QWidget):
     def __init__(self, user, caller):
         super().__init__()
-        uic.loadUi('all_avatar.ui', self)
+        uic.loadUi('all_avatar_new.ui', self)
         self.user = user
         self.caller = caller
         self.users = sqlite3.connect('users.sqlite')
@@ -286,6 +301,30 @@ class Avatar(QWidget):
         self.pushButton_2.clicked.connect(self.clickBtn2)
         self.pushButton_4.clicked.connect(self.clickBtn4)
         self.pushButton_3.clicked.connect(self.clickBtn3)
+        if self.caller == 'u':
+            self.inf = self.cur1.execute(f"SELECT * from users where pupillogin='{self.user}'").fetchone()
+            self.name, self.surname = self.inf[2], self.inf[3]
+            self.label_5.setText(str(self.name + ' ' + self.surname))
+            ava = self.cur1.execute(f"SELECT avatarfile from users WHERE pupillogin='{self.user}'").fetchone()
+        else:
+            self.inf = self.cur2.execute(f"SELECT * from teachers where teacherlogin='{self.user}'").fetchone()
+            self.name, self.surname = self.inf[1], self.inf[0]
+            self.label_5.setText(str(self.name + ' ' + self.surname))
+            ava = self.cur2.execute(f"SELECT avatarfile from teachers WHERE teacherlogin='{self.user}'").fetchone()
+        ava = str(ava[0])
+        print(ava)
+        pixmap = QPixmap(ava)
+        self.label.setPixmap(pixmap)
+        self.label.setFixedSize(60, 60)
+        pixmap = QPixmap('avatar_default.jpg')
+        self.label_2.setPixmap(pixmap)
+        self.label_2.setFixedSize(60, 60)
+        pixmap = QPixmap('avatar2.jpg')
+        self.label_3.setPixmap(pixmap)
+        self.label_3.setFixedSize(60, 60)
+        pixmap = QPixmap('avatar4.jpg')
+        self.label_4.setPixmap(pixmap)
+        self.label_4.setFixedSize(60, 60)
         self.show()
 
     def clickBtn2(self):
@@ -337,10 +376,12 @@ class PupilApplication(QMainWindow):
         self.cur1 = self.users.cursor()
         self.apps = sqlite3.connect('apps.sqlite')
         self.cur2 = self.apps.cursor()
-        #new_apps =
         self.inf = self.cur1.execute(f"SELECT * from users where pupillogin='{self.user}'").fetchone()
         self.name, self.surname = self.inf[2], self.inf[3]
         self.label_4.setText(str(self.name + ' ' + self.surname))
+        pixmap = QPixmap(self.inf[6])
+        self.label_6.setPixmap(pixmap)
+        self.label_6.setFixedSize(60, 60)
         self.show()
 
     def clickBtn1(self):
@@ -418,7 +459,7 @@ class PupilApplication(QMainWindow):
 class RegWin(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('teacher_entrance.ui', self)
+        uic.loadUi('teacher_entrance_new.ui', self)
         self.pushButton.clicked.connect(self.clickBtn1)
         self.pushButton_2.clicked.connect(self.clickBtn2)
         self.a = None
@@ -455,7 +496,7 @@ class RegWin(QMainWindow):
 class TeacherCheckin(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('teacher_register.ui', self)
+        uic.loadUi('teacher_register_new.ui', self)
         self.show()
         self.pushButton.clicked.connect(self.clickBtn)
 
@@ -492,10 +533,10 @@ class TeacherCheckin(QMainWindow):
         print(1)
         teachers = sqlite3.connect("teachers.sqlite")
         cur1 = teachers.cursor()
-        inp = (self.lineEdit.text(), self.lineEdit_2.text(), self.lineEdit_4.text(), self.lineEdit_3.text(), self.lineEdit_6.text(), self.lineEdit_5.text(), 'avatar_default.jpg')
+        inp = (self.lineEdit.text().strip(), self.lineEdit_2.text().strip(), self.lineEdit_4.text().strip(), self.lineEdit_3.text().strip(), self.lineEdit_6.text().strip(), self.lineEdit_5.text().strip(), 'avatar_default.jpg')
         print(inp)
-        if self.password(self.lineEdit_3.text(), self.lineEdit_6.text()):
-            teacher = self.lineEdit_3.text()
+        if self.password(self.lineEdit_3.text().strip(), self.lineEdit_6.text().strip()):
+            teacher = self.lineEdit_3.text().strip()
             cur1.execute(f"INSERT INTO teachers (teachersurname, teachername, teachername2, teacherlogin, teacherpassword, email, avatarfile) VALUES(?, ?, ?, ?, ?, ?, ?)", inp)
             teachers.commit()
             self.teacherAddPupil(teacher)
@@ -508,7 +549,7 @@ class TeacherCheckin(QMainWindow):
 class TeacherAddPupil(QMainWindow):
     def __init__(self, teacher):
         super().__init__()
-        uic.loadUi('teacher_add_class.ui', self)
+        uic.loadUi('teacher_add_class_new.ui', self)
         self.show()
         self.teacher = teacher
         self.pushButton.clicked.connect(self.clickBtn)
@@ -572,25 +613,53 @@ class TeacherAddPupil(QMainWindow):
 class TeacherEntrance(QMainWindow):
     def __init__(self, teacher):
         super().__init__()
-        uic.loadUi('teacher_main.ui', self)
+        uic.loadUi('teacher_main_new.ui', self)
         self.teacher = teacher
-        self.teachers = sqlite3.connect('teachers.sqlite')
-        self.cur1 = self.teachers.cursor()
-        self.inf = self.cur1.execute(f"SELECT * from teachers where teacherlogin='{self.teacher}'").fetchone()
-        self.name, self.surname = self.inf[1], self.inf[0]
-        self.label.setText(str(self.name + ' ' + self.surname))
-        self.pushButton_4.clicked.connect(self.clickBtn3)
+        self.users = sqlite3.connect('users.sqlite')
+        self.cur1 = self.users.cursor()
         self.pushButton.clicked.connect(self.clickBtn9)
         self.pushButton_2.clicked.connect(self.clickBtn2)
+        self.apps = sqlite3.connect('apps.sqlite')
+        self.cur2 = self.apps.cursor()
+        self.teachers = sqlite3.connect('teachers.sqlite')
+        self.cur3 = self.teachers.cursor()
+        self.inf = self.cur3.execute(f"SELECT * from teachers where teacherlogin='{self.teacher}'").fetchone()
+        self.name, self.surname = self.inf[1], self.inf[0]
+        self.label.setText(str(self.name + ' ' + self.surname))
+        pixmap = QPixmap(self.inf[6])
+        self.label_3.setPixmap(pixmap)
+        self.label_3.setFixedSize(60, 60)
+        apps_list = list(self.cur2.execute(f"SELECT * FROM apps WHERE teacherlogin='{self.teacher}'"))
+        print(apps_list)
+        for i in range(len(apps_list)):
+            self.tableWidget.insertRow(i)
+            local_inf = apps_list[i]
+            inf = self.cur1.execute(f"SELECT * from users WHERE pupillogin='{local_inf[1]}'").fetchone()
+            ava = str(inf[6])
+            print(str(ava))
+            user_name = str(inf[2] + ' ' + inf[3])
+            status = apps_list[i][7]
+            self.label = QLabel(self.tableWidget)
+            pixmap = QPixmap(ava)
+            self.label.setPixmap(pixmap)
+            self.label.setFixedSize(60, 60)
+            self.tableWidget.setCellWidget(i, 0, self.label)
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(user_name))
+            self.btn = QPushButton(self.tableWidget)
+            self.btn.setText(status)
+            self.tableWidget.setCellWidget(i, 2, self.btn)
+            if status == 'В рассмотрении':
+                self.data = apps_list[i]
+                self.btn.clicked.connect(self.checkInquary)
+        self.tableWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
         self.show()
 
-    def clickBtn3(self):
-        print(1)
-        self.checkInquary()
 
     def checkInquary(self):
         self.hide()
-        self.a = TeacherCheckInquary(self.teacher)
+        self.a = TeacherCheckInquary(self.teacher, self.data)
 
     def clickBtn9(self):
         print(3)
@@ -605,9 +674,10 @@ class TeacherEntrance(QMainWindow):
 
 
 class TeacherCheckInquary(QMainWindow):
-    def __init__(self, teacher):
+    def __init__(self, teacher, data):
         super().__init__()
-        uic.loadUi('teacher_application.ui', self)
+        uic.loadUi('teacher_application_new.ui', self)
+        self.data = data
         self.teacher = teacher
         self.teachers = sqlite3.connect('teachers.sqlite')
         self.cur1 = self.teachers.cursor()
@@ -620,9 +690,16 @@ class TeacherCheckInquary(QMainWindow):
         self.pushButton_4.clicked.connect(self.clickBtn4)
         self.pushButton_6.clicked.connect(self.clickBtn6)
         self.pushButton_5.clicked.connect(self.clickBtn5)
+        self.label_6.setText(self.data[2])
+        self.label_9.setText(self.data[3])
+        self.label_8.setText(self.data[4])
+        pixmap = QPixmap(self.inf[6])
+        self.label_5.setPixmap(pixmap)
+        self.label_5.setFixedSize(60, 60)
+        self.show()
         self.le = QLineEdit(self)
         self.le.move(130, 22)
-        self.show()
+
 
     def clickBtn3(self):
         print(1)
@@ -630,26 +707,75 @@ class TeacherCheckInquary(QMainWindow):
 
     def approveInquary(self):
         self.hide()
-        self.a = TeacherEntrance(self.teacher)
+        self.data = tuple(list(self.data[:5]) + [self.data[7]])
+        self.cur2.execute(
+            """UPDATE apps SET status="Одобрена" WHERE (teacherlogin, pupillogin, reason, time, date, status)=(?, ?, ?, ?, ?, ?)""",
+            self.data)
+        self.apps.commit()
+        self.a = FileLoad(self.teacher, self.data)
+        self.hide()
 
     def clickBtn4(self):
         print(1)
         self.approveInquary2()
 
     def approveInquary2(self):
-        self.hide()
-        self.a = TeacherEntrance(self.teacher)
         text, ok = QInputDialog.getText(self, 'Отклонить', 'Введите причину отказа:')
 
         if ok:
             print(text)
             self.le.setText(str(text))
+        self.data = tuple([text] + list(self.data[:5]) + [self.data[7]])
+        self.cur2.execute(
+            """UPDATE apps SET teacherreason=?, status="Отклонена" WHERE (teacherlogin, pupillogin, reason, time, date, status)=(?, ?, ?, ?, ?, ?)""",
+            self.data)
+        self.apps.commit()
+        self.hide()
+        self.a = TeacherEntrance(self.teacher)
 
     def clickBtn6(self):
         self.a = Avatar(self.teacher, 't')
 
     def clickBtn5(self):
         sys.exit()
+
+
+class FileLoad(QWidget):
+    def __init__(self, teacher, information):
+        super().__init__()
+        uic.loadUi('teacher_save_file.ui', self)
+        self.pushButton.clicked.connect(self.clickBtn1)
+        self.show()
+        self.teacher = teacher
+        self.information = information
+        self.teachers = sqlite3.connect('teachers.sqlite')
+        self.cur1 = self.teachers.cursor()
+        self.inf = self.cur1.execute(f"SELECT * from teachers where teacherlogin='{self.teacher}'").fetchone()
+        self.users = sqlite3.connect('users.sqlite')
+        self.cur2 = self.users.cursor()
+        self.inf2 = self.cur2.execute(f"SELECT * from users where pupillogin='{self.information[1]}'").fetchone()
+        self.teacher_name = ' '.join([self.inf[0], self.inf[1], self.inf[2]])
+        self.pupil_name = ' '.join([self.inf2[3], self.inf2[2]])
+        self.lesson_num = self.information[3]
+        self.date = self.information[4]
+        self.reason = self.information[2]
+
+    def clickBtn1(self):
+        doc = DocxTemplate("pass.docx")
+        context = {
+            'teacher_name': self.teacher_name,
+            'name': self.pupil_name,
+            'lesson_num': self.lesson_num,
+            'date': self.date,
+            'reason': self.reason
+        }
+
+        doc.render(context)
+        doc.save("res.docx")
+        msg = QMessageBox(QMessageBox.Information, '', 'Файл успешно скачан.', parent=self)
+        msg.show()
+        self.hide()
+        self.a = TeacherEntrance(self.teacher)
 
 
 if __name__ == '__main__':

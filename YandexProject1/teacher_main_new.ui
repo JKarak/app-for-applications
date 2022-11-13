@@ -121,12 +121,12 @@
           <x>10</x>
           <y>10</y>
           <width>951</width>
-          <height>91</height>
+          <height>432</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
-          <widget class="QLabel" name="label_4">
+          <widget class="QTableWidget" name="tableWidget">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -135,43 +135,25 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>60</width>
-             <height>60</height>
+             <width>800</width>
+             <height>430</height>
             </size>
            </property>
-           <property name="maximumSize">
-            <size>
-             <width>60</width>
-             <height>60</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>TextLabel</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_2">
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-            </font>
-           </property>
-           <property name="text">
-            <string>Имя пользователя</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pushButton_4">
-           <property name="font">
-            <font>
-             <pointsize>12</pointsize>
-            </font>
-           </property>
-           <property name="text">
-            <string>Просмотреть запрос</string>
-           </property>
+           <column>
+            <property name="text">
+             <string>Аватар</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Имя пользователя</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Статус</string>
+            </property>
+           </column>
           </widget>
          </item>
         </layout>

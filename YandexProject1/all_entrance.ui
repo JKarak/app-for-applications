@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="toolButtonStyle">
+   <enum>Qt::ToolButtonTextUnderIcon</enum>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
@@ -49,6 +52,11 @@
           </item>
           <item>
            <widget class="QLabel" name="label">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>Выбрать роль</string>
             </property>
@@ -86,6 +94,11 @@
           </item>
           <item>
            <widget class="QComboBox" name="comboBox">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
             <item>
              <property name="text">
               <string>Выбрать роль</string>
@@ -137,7 +150,7 @@
            <widget class="QPushButton" name="pushButton">
             <property name="font">
              <font>
-              <pointsize>8</pointsize>
+              <pointsize>12</pointsize>
              </font>
             </property>
             <property name="text">

@@ -27,6 +27,7 @@ def excepthook(exc_type, exc_value, exc_tb):
 sys.excepthook = excepthook
 
 
+# Открываем окно с выбором роли ученик/учитель
 class RoleWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -72,7 +73,6 @@ class RoleWindow(QMainWindow):
         self.apps.commit()
 
     def clickBtn1(self):
-        print(1)
         if self.comboBox.currentText() == 'Учитель':
             self.openTeacherEntrance()
         elif self.comboBox.currentText() == 'Выбрать роль':
@@ -90,6 +90,7 @@ class RoleWindow(QMainWindow):
         self.a = PupilEntrance()
 
 
+# При выборе "Ученик" открываем страницу входа ученика
 class PupilEntrance(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -100,11 +101,11 @@ class PupilEntrance(QMainWindow):
         self.teacher = None
         self.show()
 
+# Проверяем есть ли такой ученик в базе данных
     def clickBtn1(self):
         users = sqlite3.connect("users.sqlite")
         cur1 = users.cursor()
         login = cur1.execute(f"SELECT * from users where pupillogin='{self.lineEdit_4.text().strip()}'").fetchone()
-        print(login)
         if login is None:
             self.openEntranceError()
         elif login[1] == self.lineEdit_7.text().strip():
@@ -123,6 +124,8 @@ class PupilEntrance(QMainWindow):
         self.b = EntranceError()
 
 
+# Если такого ученика нет в базе данных выводим предложение попробовать снова,
+# или сбросить логин и пароль и получить по почте новые
 class EntranceError(QWidget):
     def __init__(self):
         super().__init__()
@@ -135,11 +138,11 @@ class EntranceError(QWidget):
         self.hide()
 
     def clickBtn2(self):
-        # отправить письмо со слёзной просьбой восстановить логин и пароль
         self.hide()
         self.a = AppForRecovery()
 
 
+# При выборе сбросить логин и пароль и получить новые открываем виджет с вводом эл. почты
 class AppForRecovery(QWidget):
     def __init__(self):
         super().__init__()
@@ -154,6 +157,7 @@ class AppForRecovery(QWidget):
     def clickBtn1(self):
         flag = True
         string = self.lineEdit.text().strip()
+        # Проверяем похоже ли введённое на почту
         if '@' not in string:
             flag = False
         elif '.' not in string:
@@ -162,14 +166,13 @@ class AppForRecovery(QWidget):
             msg = QMessageBox(QMessageBox.Information, '',
                               'Некорректный адрес электронной почты. \nПопробуйте ещё раз.', parent=self)
             msg.show()
+        # Если введённое похоже на почту, генерируем новые логин и пароль и присылаем их на введённую почту
         else:
             self.generate_random_login()
             self.generate_random_password()
             if self.send_new_password(string) == 'ok':
                 msg = QMessageBox(QMessageBox.Information, '',
                                   'Письмо с новым логином и паролем \n отправлены на Вашу почту\n Если письмо не пришло, \nпроверьте папку "Спам"', parent=self)
-                print(self.new_login)
-                print(self.new_password)
                 self.cur1.execute(f"UPDATE users SET pupillogin='{self.new_login}', pupilpassword='{self.new_password}' WHERE pupilemail='{string}'")
                 self.users.commit()
                 msg.show()
@@ -207,12 +210,12 @@ class AppForRecovery(QWidget):
         subject = 'Новый логин и пароль'
         msg = MIMEText(m, 'plain', 'utf-8')
         msg['Subject'] = Header(subject, 'utf-8')
-        print(msg)
         smtpObj.sendmail("aqwertyamkr@mail.ru", user_mail, msg.as_string())
         smtpObj.quit()
         return 'ok'
 
 
+# Если ученик успешно вошёл, открываем основную страницу ученика
 class PupilMain(QMainWindow):
     def __init__(self, user, teacher):
         super().__init__()
@@ -234,12 +237,11 @@ class PupilMain(QMainWindow):
         self.cur3 = self.teachers.cursor()
         apps_list = list(self.cur2.execute(f"SELECT * FROM apps WHERE pupillogin='{user}'"))
         self.reason = None
-        print(apps_list)
+        # Заполняем таблицу с отправленными учеником заявками
         for i in range(len(apps_list)):
             self.tableWidget.insertRow(i)
             inf = self.cur3.execute(f"SELECT * from teachers WHERE teacherlogin='{teacher}'").fetchone()
             ava = str(inf[6])
-            print(str(ava))
             user_name = str(inf[1] + ' ' + inf[0])
             status = apps_list[i][7]
             self.label = QLabel(self.tableWidget)
@@ -252,7 +254,6 @@ class PupilMain(QMainWindow):
             self.btn.setText(status)
             self.tableWidget.setCellWidget(i, 2, self.btn)
             if apps_list[i][7] == 'Отклонена':
-                print(apps_list[i][6])
                 self.reason = apps_list[i][6]
                 self.btn.clicked.connect(self.see_reason)
         self.user = user
@@ -262,21 +263,19 @@ class PupilMain(QMainWindow):
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.resizeRowsToContents()
 
+    # Если статус заявки "Отклонена", ученик может просмотреть прчину отказа
     def see_reason(self):
         message = f'Причина отказа:\n "{str(self.reason)}"'
         msg = QMessageBox(QMessageBox.Information, '', message, parent=self)
         msg.show()
 
     def clickBtn1(self):
-        print(3)
         self.changeAvatar()
 
     def clickBtn2(self):
-        print('fuckshit')
         sys.exit()
 
     def clickBtn3(self):
-        print(3)
         self.hide()
         self.application()
 
@@ -287,6 +286,7 @@ class PupilMain(QMainWindow):
         self.b = PupilApplication(self.user, self.teacher)
 
 
+# Если ученик или учитель нажали на своих основных страницах кнопку "Аватарка", открываем виджет изменения аватарки
 class Avatar(QWidget):
     def __init__(self, user, caller):
         super().__init__()
@@ -301,6 +301,7 @@ class Avatar(QWidget):
         self.pushButton_2.clicked.connect(self.clickBtn2)
         self.pushButton_4.clicked.connect(self.clickBtn4)
         self.pushButton_3.clicked.connect(self.clickBtn3)
+        # Проверяем, является ли пользователь учеником или учителем
         if self.caller == 'u':
             self.inf = self.cur1.execute(f"SELECT * from users where pupillogin='{self.user}'").fetchone()
             self.name, self.surname = self.inf[2], self.inf[3]
@@ -312,7 +313,6 @@ class Avatar(QWidget):
             self.label_5.setText(str(self.name + ' ' + self.surname))
             ava = self.cur2.execute(f"SELECT avatarfile from teachers WHERE teacherlogin='{self.user}'").fetchone()
         ava = str(ava[0])
-        print(ava)
         pixmap = QPixmap(ava)
         self.label.setPixmap(pixmap)
         self.label.setFixedSize(60, 60)
@@ -334,7 +334,6 @@ class Avatar(QWidget):
         elif self.caller == 't':
             self.cur2.execute(f"UPDATE teachers SET avatarfile='avatar_default.jpg' WHERE teacherlogin='{self.user}'")
             self.teachers.commit()
-        print('avatar changed')
 
     def clickBtn4(self):
         if self.caller == 'u':
@@ -343,7 +342,6 @@ class Avatar(QWidget):
         elif self.caller == 't':
             self.cur2.execute(f"UPDATE teachers SET avatarfile='avatar2.jpg' WHERE teacherlogin='{self.user}'")
             self.teachers.commit()
-        print('avatar changed')
 
     def clickBtn3(self):
         if self.caller == 'u':
@@ -352,13 +350,12 @@ class Avatar(QWidget):
         elif self.caller == 't':
             self.cur2.execute(f"UPDATE teachers SET avatarfile='avatar4.jpg' WHERE teacherlogin='{self.user}'")
             self.teachers.commit()
-        print('avatar changed')
 
     def clickBtn9(self):
-        print('no')
         self.hide()
 
 
+# При нажатии учеником кнопки "Создать заявку" открываем страницу создания заявки
 class PupilApplication(QMainWindow):
     def __init__(self, user, teacher):
         super().__init__()
@@ -385,16 +382,13 @@ class PupilApplication(QMainWindow):
         self.show()
 
     def clickBtn1(self):
-        print('application')
         self.changeAvatar()
 
     def clickBtn2(self):
-        print('fuckshit')
         sys.exit()
 
     def clickBtn(self):
         self.calendarWidget.show()
-        print('date')
 
     def show_date_func(self):
         date = self.calendarWidget.selectedDate()
@@ -404,13 +398,13 @@ class PupilApplication(QMainWindow):
         self.label_5.setText(local_date)
 
     def clickBtn3(self):
-        print('application')
         users = sqlite3.connect('users.sqlite')
         cur1 = users.cursor()
         teachers = sqlite3.connect('teachers.sqlite')
         cur2 = teachers.cursor()
         apps = sqlite3.connect('apps.sqlite')
         cur4 = apps.cursor()
+        # Проверяем все ли поля заявки заполнены
         if self.lineEdit.text() == '':
             msg = QMessageBox(QMessageBox.Information, '', 'Введите причину ухода.', parent=self)
             msg.show()
@@ -425,25 +419,22 @@ class PupilApplication(QMainWindow):
             cur4.execute(
                 "INSERT INTO apps (teacherlogin, pupillogin, reason, time, date, status) VALUES(?, ?, ?, ?, ?, ?)", input)
             apps.commit()
-            print(self.teacher)
             mail = cur2.execute(f"SELECT email from teachers where teacherlogin='{self.teacher}'").fetchone()
             user1 = cur1.execute(f"SELECT * from users where pupillogin='{self.user}'").fetchone()
             user_name = str(user1[2]) + ' ' + str(user1[3])
             self.send_notification(mail, user_name)
-            print(user_name)
             self.hide()
             self.openMainPupil()
 
+    # Если все поля заявки заполнены, учителю на эл. почту отправляется письмо-уведомление о новой заявке
     def send_notification(self, user_mail, user_name):
         smtpObj = smtplib.SMTP('smtp.mail.ru', 587)
         smtpObj.starttls()
         smtpObj.login("aqwertyamkr@mail.ru", "8vEyhKXqTQMkb8SiJ9VT")
-        #m = 'pamparam'
         m = f"""Пользователь {user_name} отправил новую заявку.\nВы можете просмотреть её в своём личном кабинете."""
         subject = 'Новая заявка'
         msg = MIMEText(m, 'plain', 'utf-8')
         msg['Subject'] = Header(subject, 'utf-8')
-        print(msg)
         smtpObj.sendmail("aqwertyamkr@mail.ru", user_mail, msg.as_string())
         smtpObj.quit()
         return 'ok'
@@ -456,6 +447,7 @@ class PupilApplication(QMainWindow):
         self.b = PupilMain(self.user, self.teacher)
 
 
+# При выборе роли учителя открываем страницу входа учителя
 class RegWin(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -470,18 +462,15 @@ class RegWin(QMainWindow):
         teachers = sqlite3.connect("teachers.sqlite")
         cur1 = teachers.cursor()
         login = cur1.execute(f"SELECT * from teachers where teacherlogin='{self.lineEdit_11.text()}'").fetchone()
-        print(login)
+        # Проверяем, есть ли такой учитель в базе данных
         if login is None:
             msg = QMessageBox(QMessageBox.Information, '', 'Логин не найден. \nПопробуйте ещё раз или \nсоздайте новый аккаунт', parent=self)
             msg.show()
         elif login[4].strip() == self.lineEdit_12.text():
-            print('ok')
             self.teacher = str(login[3])
             self.openTeacherEntrance()
-        print(1)
 
     def clickBtn2(self):
-        print(1)
         self.openTeacherCheckin()
 
     def openTeacherEntrance(self):
@@ -493,6 +482,7 @@ class RegWin(QMainWindow):
         self.a = TeacherCheckin()
 
 
+# Если учитель ещё не зарегистрирован в приложении, открывается страница регистрации учителя
 class TeacherCheckin(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -500,9 +490,9 @@ class TeacherCheckin(QMainWindow):
         self.show()
         self.pushButton.clicked.connect(self.clickBtn)
 
+    # Проверяем логин и пароль на соответсвие требованиям
     def password(self, x, y):
         c1 = 0
-        print(x)
         if x != '':
             if 8 <= len(x) <= 20:
                 if '123456' not in x:
@@ -513,7 +503,6 @@ class TeacherCheckin(QMainWindow):
                                     c1 += 1
 
         c2 = 0
-        print(y)
         if y != '':
             if 8 <= len(y) <= 20:
                 if '123456' not in y:
@@ -522,7 +511,7 @@ class TeacherCheckin(QMainWindow):
                             for i in y:
                                 if i.lower() in 'qwertyuiopasdfghjklzxcvbnm1234567890!#$%^}{[]()":\|.':
                                     c2 += 1
-        print(c1)
+
         if c1 != len(x) or c2 != len(y):
             msg = QMessageBox(QMessageBox.Information, '', 'Некорректный логин или пароль!', parent=self)
             msg.show()
@@ -530,22 +519,32 @@ class TeacherCheckin(QMainWindow):
             return True
 
     def clickBtn(self):
-        print(1)
         teachers = sqlite3.connect("teachers.sqlite")
         cur1 = teachers.cursor()
-        inp = (self.lineEdit.text().strip(), self.lineEdit_2.text().strip(), self.lineEdit_4.text().strip(), self.lineEdit_3.text().strip(), self.lineEdit_6.text().strip(), self.lineEdit_5.text().strip(), 'avatar_default.jpg')
-        print(inp)
-        if self.password(self.lineEdit_3.text().strip(), self.lineEdit_6.text().strip()):
-            teacher = self.lineEdit_3.text().strip()
-            cur1.execute(f"INSERT INTO teachers (teachersurname, teachername, teachername2, teacherlogin, teacherpassword, email, avatarfile) VALUES(?, ?, ?, ?, ?, ?, ?)", inp)
-            teachers.commit()
-            self.teacherAddPupil(teacher)
+        inp = (self.lineEdit.text().strip(), self.lineEdit_2.text().strip(), self.lineEdit_4.text().strip(),
+               self.lineEdit_3.text().strip(), self.lineEdit_6.text().strip(), self.lineEdit_5.text().strip(),
+               'avatar_default.jpg')
+        flag = True
+        # Проверяем, все ли поля регистрации заполнены
+        for i in inp[:-1]:
+            if i == '':
+                flag = False
+                msg = QMessageBox(QMessageBox.Information, '', 'Введите недостающие данные!', parent=self)
+                msg.show()
+                break
+        if flag:
+            if self.password(self.lineEdit_3.text().strip(), self.lineEdit_6.text().strip()):
+                teacher = self.lineEdit_3.text().strip()
+                cur1.execute(f"INSERT INTO teachers (teachersurname, teachername, teachername2, teacherlogin, teacherpassword, email, avatarfile) VALUES(?, ?, ?, ?, ?, ?, ?)", inp)
+                teachers.commit()
+                self.teacherAddPupil(teacher)
 
     def teacherAddPupil(self, teacher):
         self.hide()
         self.a = TeacherAddPupil(teacher)
 
 
+# При успешной регистрации учителя, открываем страницу добавления (регистрации) учеников
 class TeacherAddPupil(QMainWindow):
     def __init__(self, teacher):
         super().__init__()
@@ -554,12 +553,23 @@ class TeacherAddPupil(QMainWindow):
         self.teacher = teacher
         self.pushButton.clicked.connect(self.clickBtn)
         self.pushButton_2.clicked.connect(self.openFile)
+        self.pushButton_3.clicked.connect(self.clickBtn3)
         self.users = sqlite3.connect("users.sqlite")
         self.cur1 = self.users.cursor()
+        self.flag = True
 
     def clickBtn(self):
-        print(1)
         self.openTeacherEntrance()
+
+# При загрузке файла с учениками, учитель может скачать файл с выданными программой логинами и паролями учеников
+    def clickBtn3(self):
+        if self.flag:
+            msg = QMessageBox(QMessageBox.Information, '', 'Выберите файл с данными учеников!', parent=self)
+            msg.show()
+        else:
+            self.save_pupil_file()
+            msg = QMessageBox(QMessageBox.Information, '', 'Файл успешно загружен!', parent=self)
+            msg.show()
 
     def openTeacherEntrance(self):
         self.hide()
@@ -567,6 +577,7 @@ class TeacherAddPupil(QMainWindow):
 
     def generate_random_login(self):
         characters = list(string.ascii_letters + string.digits)
+        # Мы решили, что стандартная длина логинов и паролей в 8 символов будет достаточной
         Length = 8
         random.shuffle(characters)
         login = []
@@ -588,11 +599,12 @@ class TeacherAddPupil(QMainWindow):
     def openFile(self):
         self.fname = QFileDialog.getOpenFileName(self, 'Open file')[0]
         if self.fname:
+            self.flag = False
             with open(self.fname, 'r', encoding='utf-8') as f:
                 data = [i.rstrip() for i in f.readlines()]
 
                 self.tableWidget.setRowCount(len(data))
-                self.tableWidget.setColumnCount(5)
+                self.tableWidget.setColumnCount(3)
                 self.titles = data[0].split(';')
                 for i, elem in enumerate(data):
                     for j, val in enumerate(elem.split(';')):
@@ -600,16 +612,23 @@ class TeacherAddPupil(QMainWindow):
                     if i != 0:
                         login = self.generate_random_login()
                         password = self.generate_random_password()
-                        b = [login] + [password] + list(elem.split(';')) + [self.user] + ['avatar_default.jpg']
-                        print(self.user)
-                        print(b)
+                        b = [login] + [password] + list(elem.split(';')) + [self.teacher] + ['avatar_default.jpg']
                         a = tuple(b)
-                        print(a)
                         if self.cur1.execute(f"SELECT * from users where pupillogin='{a[0]}'") is not None:
                             self.cur1.execute("INSERT INTO users (pupillogin, pupilpassword, pupilname, pupilsurname, pupilemail, teacherlogin, avatarfile) VALUES(?, ?, ?, ?, ?, ?, ?)", a)
                             self.users.commit()
 
+    def save_pupil_file(self):
+        with open('pupils.csv', 'w', encoding="utf8") as f:
+            pupil_list = list(self.cur1.execute(f"SELECT * FROM users WHERE teacherlogin='{self.teacher}'"))
+            print('Фамилия;Имя;Логин;Пароль', file=f)
+            for d in pupil_list:
+                d = [d[3], d[2], d[0], d[1]]
+                d = ';'.join(d)
+                print(d, file=f)
 
+
+# При успешном входе или регистрации учителя, открываем основную страницу учителя
 class TeacherEntrance(QMainWindow):
     def __init__(self, teacher):
         super().__init__()
@@ -630,13 +649,12 @@ class TeacherEntrance(QMainWindow):
         self.label_3.setPixmap(pixmap)
         self.label_3.setFixedSize(60, 60)
         apps_list = list(self.cur2.execute(f"SELECT * FROM apps WHERE teacherlogin='{self.teacher}'"))
-        print(apps_list)
+        # Загружаем таблицу заявок, отравленных учителю
         for i in range(len(apps_list)):
             self.tableWidget.insertRow(i)
             local_inf = apps_list[i]
             inf = self.cur1.execute(f"SELECT * from users WHERE pupillogin='{local_inf[1]}'").fetchone()
             ava = str(inf[6])
-            print(str(ava))
             user_name = str(inf[2] + ' ' + inf[3])
             status = apps_list[i][7]
             self.label = QLabel(self.tableWidget)
@@ -656,13 +674,11 @@ class TeacherEntrance(QMainWindow):
         self.tableWidget.resizeRowsToContents()
         self.show()
 
-
     def checkInquary(self):
         self.hide()
         self.a = TeacherCheckInquary(self.teacher, self.data)
 
     def clickBtn9(self):
-        print(3)
         self.changeAvatar()
 
     def changeAvatar(self):
@@ -672,7 +688,8 @@ class TeacherEntrance(QMainWindow):
         sys.exit()
 
 
-
+# Если заявка имеет статус "В рассмотрении", учитель может её просмотреть и одобрить/отклонить
+# открываем страницу просмотра заявки
 class TeacherCheckInquary(QMainWindow):
     def __init__(self, teacher, data):
         super().__init__()
@@ -700,11 +717,10 @@ class TeacherCheckInquary(QMainWindow):
         self.le = QLineEdit(self)
         self.le.move(130, 22)
 
-
     def clickBtn3(self):
-        print(1)
         self.approveInquary()
 
+    # При одобрении заявки, меняем её статус и учитель может сохранить файл с готовым пропуском на своём устройстве
     def approveInquary(self):
         self.hide()
         self.data = tuple(list(self.data[:5]) + [self.data[7]])
@@ -716,14 +732,13 @@ class TeacherCheckInquary(QMainWindow):
         self.hide()
 
     def clickBtn4(self):
-        print(1)
         self.approveInquary2()
 
+    # При отклонении заявки, учитель пишет причину отказа
     def approveInquary2(self):
         text, ok = QInputDialog.getText(self, 'Отклонить', 'Введите причину отказа:')
 
         if ok:
-            print(text)
             self.le.setText(str(text))
         self.data = tuple([text] + list(self.data[:5]) + [self.data[7]])
         self.cur2.execute(

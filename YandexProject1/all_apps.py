@@ -827,7 +827,6 @@ class TeacherCheckInquary(QMainWindow):
     def clickBtn5(self):
         sys.exit()
 
-
 class FileLoad(QWidget):
     def __init__(self, teacher, information):
         super().__init__()

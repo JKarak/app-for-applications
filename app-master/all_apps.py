@@ -72,7 +72,8 @@ class RoleWindow(QMainWindow):
         if self.comboBox.currentText() == 'Учитель':
             self.openTeacherEntrance()
         elif self.comboBox.currentText() == 'Выбрать роль':
-            msg = QMessageBox(QMessageBox.Information, '', 'Выберите роль!', parent=self)
+            msg = QMessageBox(QMessageBox.Information, '',
+                              'Выберите роль!', parent=self)
             msg.show()
         else:
             self.openPupilEntrance()
@@ -102,7 +103,8 @@ class PupilEntrance(QMainWindow):
     def clickBtn1(self):
         users = sqlite3.connect("db/users.sqlite")
         cur1 = users.cursor()
-        login = cur1.execute(f"SELECT * from users where pupillogin='{self.lineEdit_4.text().strip()}'").fetchone()
+        login = cur1.execute(
+            f"SELECT * from users where pupillogin='{self.lineEdit_4.text().strip()}'").fetchone()
         if login is None:
             self.openEntranceError()
         elif login[1] != self.lineEdit_7.text().strip():
@@ -169,7 +171,8 @@ class AppForRecovery(QWidget):
             msg.show()
         # Если введённое похоже на почту, генерируем новые логин и пароль и присылаем их на введённую почту
         else:
-            pupils = list(self.cur1.execute(f"SELECT * from users WHERE pupilemail='{string}'"))
+            pupils = list(self.cur1.execute(
+                f"SELECT * from users WHERE pupilemail='{string}'"))
             print(pupils)
             if pupils != []:
                 self.generate_random_login()
@@ -177,7 +180,8 @@ class AppForRecovery(QWidget):
                 if self.send_new_password(string) == 'ok':
                     msg = QMessageBox(QMessageBox.Information, '',
                                       'Письмо с новым логином и паролем \n отправлены на Вашу почту\n Если письмо не пришло, \nпроверьте папку "Спам"', parent=self)
-                    self.cur1.execute(f"UPDATE users SET pupillogin='{self.new_login}', pupilpassword='{self.new_password}' WHERE pupilemail='{string}'")
+                    self.cur1.execute(
+                        f"UPDATE users SET pupillogin='{self.new_login}', pupilpassword='{self.new_password}' WHERE pupilemail='{string}'")
                     self.users.commit()
                     msg.show()
                     self.hide()
@@ -213,7 +217,7 @@ class AppForRecovery(QWidget):
     def send_new_password(self, user_mail):
         smtpObj = smtplib.SMTP('smtp.mail.ru', 587)
         smtpObj.starttls()
-        smtpObj.login("aqwertyamkr@mail.ru", "cNy5v4M2GTD73sT14iPu")
+        smtpObj.login("aqwertyamkr@mail.ru", "w34KfgHRgJL3CfBCcaBG")
         m = f"""Ваш новый логин: {self.new_login}\nПароль: {self.new_password}\n\nНе сообщайте никому эти данные в целях безопасности!"""
         subject = 'Новый логин и пароль'
         msg = MIMEText(m, 'plain', 'utf-8')
@@ -231,7 +235,8 @@ class PupilMain(QMainWindow):
         self.setWindowTitle('Основной экран ученика')
         self.users = sqlite3.connect('db/users.sqlite')
         self.cur1 = self.users.cursor()
-        self.inf = self.cur1.execute(f"SELECT * from users where pupillogin='{user}'").fetchone()
+        self.inf = self.cur1.execute(
+            f"SELECT * from users where pupillogin='{user}'").fetchone()
         self.name, self.surname = self.inf[2], self.inf[3]
         self.label.setText(str(self.name + ' ' + self.surname))
         pixmap = QPixmap(self.inf[6])
@@ -243,33 +248,36 @@ class PupilMain(QMainWindow):
         self.pushButton.clicked.connect(self.clickBtn)
         self.users = sqlite3.connect('db/users.sqlite')
         self.cur1 = self.users.cursor()
-        apps_list = list(self.cur1.execute(f"SELECT * FROM apps WHERE pupillogin='{user}'"))
+        apps_list = list(self.cur1.execute(
+            f"SELECT * FROM apps WHERE pupillogin='{user}'"))
         self.reason = None
         # Заполняем таблицу с отправленными учеником заявками
         for i in range(len(apps_list)):
             self.tableWidget.insertRow(i)
-            inf = self.cur1.execute(f"SELECT * from teachers WHERE teacherlogin='{teacher}'").fetchone()
+            inf = self.cur1.execute(
+                f"SELECT * from teachers WHERE teacherlogin='{teacher}'").fetchone()
             ava = str(inf[6])
             user_name = str(inf[1] + ' ' + inf[0])
-            status = apps_list[i][7]
-            date = apps_list[i][4]
+            status = apps_list[i][6]
             self.label = QLabel(self.tableWidget)
             pixmap = QPixmap(ava)
             self.label.setPixmap(pixmap)
             self.label.setFixedSize(60, 60)
             self.tableWidget.setCellWidget(i, 0, self.label)
             self.tableWidget.setItem(i, 1, QTableWidgetItem(user_name))
+            date = apps_list[i][4]
             self.tableWidget.setItem(i, 3, QTableWidgetItem(date))
             self.btn = QPushButton(self.tableWidget)
             self.btn.setText(status)
             self.tableWidget.setCellWidget(i, 2, self.btn)
-            if apps_list[i][7] == 'Отклонена':
-                self.reason = apps_list[i][6]
+            if apps_list[i][6] == 'Отклонена':
+                self.reason = apps_list[i][5]
                 self.btn.clicked.connect(self.see_reason)
         self.user = user
         self.teacher = teacher
         self.show()
-        self.tableWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.tableWidget.setSizeAdjustPolicy(
+            QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.resizeRowsToContents()
 
@@ -293,7 +301,8 @@ class PupilMain(QMainWindow):
         self.a = Avatar(self.user, 'u')
 
     def clickBtn(self):
-        ava = str(self.cur1.execute(f"""SELECT avatarfile from users WHERE pupillogin='{self.user}'""").fetchone()[0])
+        ava = str(self.cur1.execute(
+            f"""SELECT avatarfile from users WHERE pupillogin='{self.user}'""").fetchone()[0])
         pixmap = QPixmap(ava)
         self.label_6.setPixmap(pixmap)
         self.label_6.setFixedSize(60, 60)
@@ -318,15 +327,19 @@ class Avatar(QWidget):
         self.pushButton_3.clicked.connect(self.clickBtn3)
         # Проверяем, является ли пользователь учеником или учителем
         if self.caller == 'u':
-            self.inf = self.cur1.execute(f"SELECT * from users where pupillogin='{self.user}'").fetchone()
+            self.inf = self.cur1.execute(
+                f"SELECT * from users where pupillogin='{self.user}'").fetchone()
             self.name, self.surname = self.inf[2], self.inf[3]
             self.label_5.setText(str(self.name + ' ' + self.surname))
-            ava = self.cur1.execute(f"SELECT avatarfile from users WHERE pupillogin='{self.user}'").fetchone()
+            ava = self.cur1.execute(
+                f"SELECT avatarfile from users WHERE pupillogin='{self.user}'").fetchone()
         else:
-            self.inf = self.cur1.execute(f"SELECT * from teachers where teacherlogin='{self.user}'").fetchone()
+            self.inf = self.cur1.execute(
+                f"SELECT * from teachers where teacherlogin='{self.user}'").fetchone()
             self.name, self.surname = self.inf[1], self.inf[0]
             self.label_5.setText(str(self.name + ' ' + self.surname))
-            ava = self.cur1.execute(f"SELECT avatarfile from teachers WHERE teacherlogin='{self.user}'").fetchone()
+            ava = self.cur1.execute(
+                f"SELECT avatarfile from teachers WHERE teacherlogin='{self.user}'").fetchone()
         ava = str(ava[0])
         pixmap = QPixmap(ava)
         self.label.setPixmap(pixmap)
@@ -344,10 +357,12 @@ class Avatar(QWidget):
 
     def clickBtn2(self):
         if self.caller == 'u':
-            self.cur1.execute(f"UPDATE users SET avatarfile='avatar_default.jpg' WHERE pupillogin='{self.user}'")
+            self.cur1.execute(
+                f"UPDATE users SET avatarfile='avatar_default.jpg' WHERE pupillogin='{self.user}'")
             self.users.commit()
         elif self.caller == 't':
-            self.cur1.execute(f"UPDATE teachers SET avatarfile='avatar_default.jpg' WHERE teacherlogin='{self.user}'")
+            self.cur1.execute(
+                f"UPDATE teachers SET avatarfile='avatar_default.jpg' WHERE teacherlogin='{self.user}'")
             self.users.commit()
         ava = 'avatar_default.jpg'
         pixmap = QPixmap(ava)
@@ -356,10 +371,12 @@ class Avatar(QWidget):
 
     def clickBtn4(self):
         if self.caller == 'u':
-            self.cur1.execute(f"UPDATE users SET avatarfile='avatar2.jpg' WHERE pupillogin='{self.user}'")
+            self.cur1.execute(
+                f"UPDATE users SET avatarfile='avatar2.jpg' WHERE pupillogin='{self.user}'")
             self.users.commit()
         elif self.caller == 't':
-            self.cur1.execute(f"UPDATE teachers SET avatarfile='avatar2.jpg' WHERE teacherlogin='{self.user}'")
+            self.cur1.execute(
+                f"UPDATE teachers SET avatarfile='avatar2.jpg' WHERE teacherlogin='{self.user}'")
             self.users.commit()
         ava = 'avatar2.jpg'
         pixmap = QPixmap(ava)
@@ -368,10 +385,12 @@ class Avatar(QWidget):
 
     def clickBtn3(self):
         if self.caller == 'u':
-            self.cur1.execute(f"UPDATE users SET avatarfile='avatar4.jpg' WHERE pupillogin='{self.user}'")
+            self.cur1.execute(
+                f"UPDATE users SET avatarfile='avatar4.jpg' WHERE pupillogin='{self.user}'")
             self.users.commit()
         elif self.caller == 't':
-            self.cur1.execute(f"UPDATE teachers SET avatarfile='avatar4.jpg' WHERE teacherlogin='{self.user}'")
+            self.cur1.execute(
+                f"UPDATE teachers SET avatarfile='avatar4.jpg' WHERE teacherlogin='{self.user}'")
             self.users.commit()
         ava = 'avatar4.jpg'
         pixmap = QPixmap(ava)
@@ -400,7 +419,8 @@ class PupilApplication(QMainWindow):
         self.teacher = teacher
         self.users = sqlite3.connect('db/users.sqlite')
         self.cur1 = self.users.cursor()
-        self.inf = self.cur1.execute(f"SELECT * from users where pupillogin='{self.user}'").fetchone()
+        self.inf = self.cur1.execute(
+            f"SELECT * from users where pupillogin='{self.user}'").fetchone()
         self.name, self.surname = self.inf[2], self.inf[3]
         self.label_4.setText(str(self.name + ' ' + self.surname))
         pixmap = QPixmap(self.inf[6])
@@ -409,7 +429,8 @@ class PupilApplication(QMainWindow):
         self.show()
 
     def clickBtn2(self):
-        ava = str(self.cur1.execute(f"""SELECT avatarfile from users WHERE pupillogin='{self.user}'""").fetchone()[0])
+        ava = str(self.cur1.execute(
+            f"""SELECT avatarfile from users WHERE pupillogin='{self.user}'""").fetchone()[0])
         pixmap = QPixmap(ava)
         self.label_6.setPixmap(pixmap)
         self.label_6.setFixedSize(60, 60)
@@ -435,21 +456,27 @@ class PupilApplication(QMainWindow):
         cur1 = users.cursor()
         # Проверяем все ли поля заявки заполнены
         if self.comboBox.currentText() == 'Выберите причину':
-            msg = QMessageBox(QMessageBox.Information, '', 'Введите причину ухода.', parent=self)
+            msg = QMessageBox(QMessageBox.Information, '',
+                              'Введите причину ухода.', parent=self)
             msg.show()
         elif self.comboBox_2.currentText() == 'Выберите урок':
-            msg = QMessageBox(QMessageBox.Information, '', 'Введите время ухода.', parent=self)
+            msg = QMessageBox(QMessageBox.Information, '',
+                              'Введите время ухода.', parent=self)
             msg.show()
         elif self.date is None:
-            msg = QMessageBox(QMessageBox.Information, '', 'Выберите дату ухода.', parent=self)
+            msg = QMessageBox(QMessageBox.Information, '',
+                              'Выберите дату ухода.', parent=self)
             msg.show()
         else:
-            input = (self.teacher, self.user, self.comboBox.currentText(), self.comboBox_2.currentText(), self.date, "В рассмотрении")
+            input = (self.teacher, self.user, self.comboBox.currentText(
+            ), self.comboBox_2.currentText(), self.date, "В рассмотрении")
             cur1.execute(
                 "INSERT INTO apps (teacherlogin, pupillogin, reason, time, date, status) VALUES(?, ?, ?, ?, ?, ?)", input)
             users.commit()
-            mail = cur1.execute(f"SELECT email from teachers where teacherlogin='{self.teacher}'").fetchone()
-            user1 = cur1.execute(f"SELECT * from users where pupillogin='{self.user}'").fetchone()
+            mail = cur1.execute(
+                f"SELECT email from teachers where teacherlogin='{self.teacher}'").fetchone()
+            user1 = cur1.execute(
+                f"SELECT * from users where pupillogin='{self.user}'").fetchone()
             user_name = str(user1[2]) + ' ' + str(user1[3])
             self.send_notification(mail, user_name)
             self.hide()
@@ -459,7 +486,7 @@ class PupilApplication(QMainWindow):
     def send_notification(self, user_mail, user_name):
         smtpObj = smtplib.SMTP('smtp.mail.ru', 587)
         smtpObj.starttls()
-        smtpObj.login("aqwertyamkr@mail.ru", "cNy5v4M2GTD73sT14iPu")
+        smtpObj.login("aqwertyamkr@mail.ru", "w34KfgHRgJL3CfBCcaBG")
         m = f"Пользователь {user_name} отправил новую заявку.\nВы можете просмотреть её в своём личном кабинете."
         subject = 'Новая заявка'
         msg = MIMEText(m, 'plain', 'utf-8')
@@ -491,10 +518,12 @@ class RegWin(QMainWindow):
     def clickBtn1(self):
         users = sqlite3.connect('db/users.sqlite')
         cur1 = users.cursor()
-        login = cur1.execute(f"SELECT * from teachers where teacherlogin='{self.lineEdit_11.text()}'").fetchone()
+        login = cur1.execute(
+            f"SELECT * from teachers where teacherlogin='{self.lineEdit_11.text()}'").fetchone()
         # Проверяем, есть ли такой учитель в базе данных
         if login is None:
-            msg = QMessageBox(QMessageBox.Information, '', 'Логин не найден. \nПопробуйте ещё раз или \nсоздайте новый аккаунт', parent=self)
+            msg = QMessageBox(QMessageBox.Information, '',
+                              'Логин не найден. \nПопробуйте ещё раз или \nсоздайте новый аккаунт', parent=self)
             msg.show()
         elif login[4] != self.lineEdit_12.text().strip():
             msg = QMessageBox(QMessageBox.Information, '',
@@ -550,7 +579,8 @@ class TeacherCheckin(QMainWindow):
                                     c2 += 1
 
         if c1 != len(x) or c2 != len(y):
-            msg = QMessageBox(QMessageBox.Information, '', 'Некорректный логин или пароль!', parent=self)
+            msg = QMessageBox(QMessageBox.Information, '',
+                              'Некорректный логин или пароль!', parent=self)
             msg.show()
         else:
             return True
@@ -559,8 +589,9 @@ class TeacherCheckin(QMainWindow):
         users = sqlite3.connect('db/users.sqlite')
         cur1 = users.cursor()
         inp = (self.lineEdit.text().strip(), self.lineEdit_2.text().strip(), self.lineEdit_4.text().strip(),
-               self.lineEdit_3.text().strip(), self.lineEdit_6.text().strip(), self.lineEdit_5.text().strip(),
-               'avatar_default.jpg')
+               self.lineEdit_3.text().strip(), self.lineEdit_6.text(
+        ).strip(), self.lineEdit_5.text().strip(),
+            'avatar_default.jpg')
         flag0 = True
         string = self.lineEdit_5.text().strip()
         # Проверяем похоже ли введённое на почту
@@ -578,24 +609,30 @@ class TeacherCheckin(QMainWindow):
             for i in inp[:-1]:
                 if i == '':
                     flag = False
-                    msg = QMessageBox(QMessageBox.Information, '', 'Введите недостающие данные!', parent=self)
+                    msg = QMessageBox(QMessageBox.Information, '',
+                                      'Введите недостающие данные!', parent=self)
                     msg.show()
                     break
             if flag:
-                login = cur1.execute(f"""SELECT * from teachers WHERE teacherlogin='{self.lineEdit_3.text().strip()}'""").fetchone()
+                login = cur1.execute(
+                    f"""SELECT * from teachers WHERE teacherlogin='{self.lineEdit_3.text().strip()}'""").fetchone()
                 if login is None:
                     if self.password(self.lineEdit_3.text().strip(), self.lineEdit_6.text().strip()):
                         teacher = self.lineEdit_3.text().strip()
-                        previous_regs = list(self.cur1.execute(f"SELECT * from teachers where email='{string}'"))
+                        previous_regs = list(self.cur1.execute(
+                            f"SELECT * from teachers where email='{string}'"))
                         if previous_regs != []:
                             for i in previous_regs:
-                                self.cur1.execute(f"DELETE from teachers where email='{string}'").fetchone()
+                                self.cur1.execute(
+                                    f"DELETE from teachers where email='{string}'").fetchone()
                             self.users.commit()
-                        cur1.execute(f"INSERT INTO teachers (teachersurname, teachername, teachername2, teacherlogin, teacherpassword, email, avatarfile) VALUES(?, ?, ?, ?, ?, ?, ?)", inp)
+                        cur1.execute(
+                            f"INSERT INTO teachers (teachersurname, teachername, teachername2, teacherlogin, teacherpassword, email, avatarfile) VALUES(?, ?, ?, ?, ?, ?, ?)", inp)
                         users.commit()
                         self.teacherAddPupil(teacher)
                 else:
-                    msg = QMessageBox(QMessageBox.Information, '', 'Такой логин уже существует!', parent=self)
+                    msg = QMessageBox(QMessageBox.Information, '',
+                                      'Такой логин уже существует!', parent=self)
                     msg.show()
 
     def teacherAddPupil(self, teacher):
@@ -624,11 +661,13 @@ class TeacherAddPupil(QMainWindow):
 # При загрузке файла с учениками, учитель может скачать файл с выданными программой логинами и паролями учеников
     def clickBtn3(self):
         if self.flag:
-            msg = QMessageBox(QMessageBox.Information, '', 'Выберите файл с данными учеников!', parent=self)
+            msg = QMessageBox(QMessageBox.Information, '',
+                              'Выберите файл с данными учеников!', parent=self)
             msg.show()
         else:
             self.save_pupil_file()
-            msg = QMessageBox(QMessageBox.Information, '', 'Файл "pupils.csv" успешно загружен!', parent=self)
+            msg = QMessageBox(QMessageBox.Information, '',
+                              'Файл "pupils.csv" успешно загружен!', parent=self)
             msg.show()
 
     def openTeacherEntrance(self):
@@ -672,19 +711,25 @@ class TeacherAddPupil(QMainWindow):
                     if i != 0:
                         login = self.generate_random_login()
                         password = self.generate_random_password()
-                        b = [login] + [password] + list(elem.split(';')) + [self.teacher] + ['avatar_default.jpg']
+                        b = [login] + [password] + \
+                            list(elem.split(';')) + \
+                            [self.teacher] + ['avatar_default.jpg']
                         a = tuple(b)
-                        previous_regs = list(self.cur1.execute(f"SELECT * from users where pupilemail='{a[4]}'"))
+                        previous_regs = list(self.cur1.execute(
+                            f"SELECT * from users where pupilemail='{a[4]}'"))
                         if previous_regs != []:
                             for i in previous_regs:
-                                self.cur1.execute(f"DELETE from users where pupilemail='{a[4]}'").fetchone()
+                                self.cur1.execute(
+                                    f"DELETE from users where pupilemail='{a[4]}'").fetchone()
                             self.users.commit()
-                        self.cur1.execute("INSERT INTO users (pupillogin, pupilpassword, pupilname, pupilsurname, pupilemail, teacherlogin, avatarfile) VALUES(?, ?, ?, ?, ?, ?, ?)", a)
+                        self.cur1.execute(
+                            "INSERT INTO users (pupillogin, pupilpassword, pupilname, pupilsurname, pupilemail, teacherlogin, avatarfile) VALUES(?, ?, ?, ?, ?, ?, ?)", a)
                         self.users.commit()
 
     def save_pupil_file(self):
         with open('pupils.csv', 'w', encoding="utf8") as f:
-            pupil_list = list(self.cur1.execute(f"SELECT * FROM users WHERE teacherlogin='{self.teacher}'"))
+            pupil_list = list(self.cur1.execute(
+                f"SELECT * FROM users WHERE teacherlogin='{self.teacher}'"))
             print('Фамилия;Имя;Логин;Пароль', file=f)
             for d in pupil_list:
                 d = [d[3], d[2], d[0], d[1]]
@@ -709,18 +754,21 @@ class TeacherEntrance(QMainWindow):
         self.pushButton_6.clicked.connect(self.clickBtn6)
         self.reason = ''
         self.name = ''
-        self.inf = self.cur1.execute(f"SELECT * from teachers where teacherlogin='{self.teacher}'").fetchone()
+        self.inf = self.cur1.execute(
+            f"SELECT * from teachers where teacherlogin='{self.teacher}'").fetchone()
         self.name, self.surname = self.inf[1], self.inf[0]
         self.label.setText(str(self.name + ' ' + self.surname))
         pixmap = QPixmap(self.inf[6])
         self.label_3.setPixmap(pixmap)
         self.label_3.setFixedSize(60, 60)
-        apps_list = list(self.cur1.execute(f"SELECT * FROM apps WHERE teacherlogin='{self.teacher}'"))
+        apps_list = list(self.cur1.execute(
+            f"SELECT * FROM apps WHERE teacherlogin='{self.teacher}'"))
         # Загружаем таблицу заявок, отравленных учителю
         for i in range(len(apps_list)):
             self.tableWidget_3.insertRow(i)
             local_inf = apps_list[i]
-            inf = self.cur1.execute(f"SELECT * from users WHERE pupillogin='{local_inf[1]}'").fetchone()
+            inf = self.cur1.execute(
+                f"SELECT * from users WHERE pupillogin='{local_inf[1]}'").fetchone()
             ava = str(inf[6])
             user_name = str(inf[2] + ' ' + inf[3])
             status = apps_list[i][6]
@@ -731,14 +779,15 @@ class TeacherEntrance(QMainWindow):
             self.tableWidget_3.setCellWidget(i, 0, self.label)
             self.tableWidget_3.setItem(i, 1, QTableWidgetItem(user_name))
             date = apps_list[i][4]
-            self.tableWidget_3.setItem(i, 3, QTableWidgetItem(date))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(date))
             self.btn = QPushButton(self.tableWidget_3)
             self.btn.setText(status)
             self.tableWidget_3.setCellWidget(i, 2, self.btn)
             if status == 'В рассмотрении':
                 self.data = apps_list[i]
                 self.btn.clicked.connect(self.checkInquary)
-        self.tableWidget_3.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.tableWidget_3.setSizeAdjustPolicy(
+            QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.tableWidget_3.resizeColumnsToContents()
         self.tableWidget_3.resizeRowsToContents()
         self.stackedWidget.setCurrentIndex(0)
@@ -747,7 +796,8 @@ class TeacherEntrance(QMainWindow):
         self.scrollArea_2.hide()
 
     def clickBtn3(self):
-        ava = str(self.cur1.execute(f"""SELECT avatarfile from teachers WHERE teacherlogin='{self.teacher}'""").fetchone()[0])
+        ava = str(self.cur1.execute(
+            f"""SELECT avatarfile from teachers WHERE teacherlogin='{self.teacher}'""").fetchone()[0])
         pixmap = QPixmap(ava)
         self.label_3.setPixmap(pixmap)
         self.label_3.setFixedSize(60, 60)
@@ -777,7 +827,8 @@ class TeacherEntrance(QMainWindow):
 
     def clickBtn5(self):
         if self.comboBox_2.currentText() == 'Выберите причину':
-            msg = QMessageBox(QMessageBox.Information, '', 'Выберите причину ухода.', parent=self)
+            msg = QMessageBox(QMessageBox.Information, '',
+                              'Выберите причину ухода.', parent=self)
             msg.show()
         else:
             self.reason = self.comboBox_2.currentText()
@@ -788,15 +839,17 @@ class TeacherEntrance(QMainWindow):
         self.name_filter()
 
     def reason_filter(self):
-        apps_list = list(self.cur1.execute(f"SELECT * FROM apps WHERE (teacherlogin, reason)=('{self.teacher}', '{self.reason}')"))
+        apps_list = list(self.cur1.execute(
+            f"SELECT * FROM apps WHERE (teacherlogin, reason)=('{self.teacher}', '{self.reason}')"))
         # Загружаем таблицу заявок, отравленных учителю
         for i in range(len(apps_list)):
             self.tableWidget.insertRow(i)
             local_inf = apps_list[i]
-            inf = self.cur1.execute(f"SELECT * from users WHERE pupillogin='{local_inf[1]}'").fetchone()
+            inf = self.cur1.execute(
+                f"SELECT * from users WHERE pupillogin='{local_inf[1]}'").fetchone()
             ava = str(inf[6])
             user_name = str(inf[2] + ' ' + inf[3])
-            status = apps_list[i][7]
+            status = apps_list[i][6]
             self.label = QLabel(self.tableWidget)
             pixmap = QPixmap(ava)
             self.label.setPixmap(pixmap)
@@ -811,7 +864,8 @@ class TeacherEntrance(QMainWindow):
             if status == 'В рассмотрении':
                 self.data = apps_list[i]
                 self.btn.clicked.connect(self.checkInquary)
-        self.tableWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.tableWidget.setSizeAdjustPolicy(
+            QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.resizeRowsToContents()
         self.scrollArea.show()
@@ -819,17 +873,20 @@ class TeacherEntrance(QMainWindow):
     def name_filter(self):
         string = self.name.strip().split()
         name, surname = string[0], string[1]
-        lst = list(self.cur1.execute(f"SELECT pupillogin FROM users WHERE (pupilname, pupilsurname)=('{name}', '{surname}')").fetchone())
+        lst = list(self.cur1.execute(
+            f"SELECT pupillogin FROM users WHERE (pupilname, pupilsurname)=('{name}', '{surname}')").fetchone())
         pupil = str(lst[0])
-        apps_list = list(self.cur1.execute(f"SELECT * FROM apps WHERE (teacherlogin, pupillogin)=('{self.teacher}', '{pupil}')"))
+        apps_list = list(self.cur1.execute(
+            f"SELECT * FROM apps WHERE (teacherlogin, pupillogin)=('{self.teacher}', '{pupil}')"))
         # Загружаем таблицу заявок, отравленных учителю
         for i in range(len(apps_list)):
             self.tableWidget_2.insertRow(i)
             local_inf = apps_list[i]
-            inf = self.cur1.execute(f"SELECT * from users WHERE pupillogin='{local_inf[1]}'").fetchone()
+            inf = self.cur1.execute(
+                f"SELECT * from users WHERE pupillogin='{local_inf[1]}'").fetchone()
             ava = str(inf[6])
             user_name = str(inf[2] + ' ' + inf[3])
-            status = apps_list[i][7]
+            status = apps_list[i][6]
             self.label = QLabel(self.tableWidget_2)
             pixmap = QPixmap(ava)
             self.label.setPixmap(pixmap)
@@ -837,14 +894,15 @@ class TeacherEntrance(QMainWindow):
             self.tableWidget_2.setCellWidget(i, 0, self.label)
             self.tableWidget_2.setItem(i, 1, QTableWidgetItem(user_name))
             date = apps_list[i][4]
-            self.tableWidget_2.setItem(i, 3, QTableWidgetItem(date))
+            self.tableWidget.setItem(i, 3, QTableWidgetItem(date))
             self.btn = QPushButton(self.tableWidget_2)
             self.btn.setText(status)
             self.tableWidget_2.setCellWidget(i, 2, self.btn)
             if status == 'В рассмотрении':
                 self.data = apps_list[i]
                 self.btn.clicked.connect(self.checkInquary)
-        self.tableWidget_2.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        self.tableWidget_2.setSizeAdjustPolicy(
+            QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.tableWidget_2.resizeColumnsToContents()
         self.tableWidget_2.resizeRowsToContents()
         self.scrollArea_2.show()
@@ -861,7 +919,8 @@ class TeacherCheckInquary(QMainWindow):
         self.teacher = teacher
         self.users = sqlite3.connect('db/users.sqlite')
         self.cur1 = self.users.cursor()
-        self.inf = self.cur1.execute(f"SELECT * from teachers where teacherlogin='{self.teacher}'").fetchone()
+        self.inf = self.cur1.execute(
+            f"SELECT * from teachers where teacherlogin='{self.teacher}'").fetchone()
         self.name, self.surname = self.inf[1], self.inf[0]
         self.label_4.setText(str(self.name + ' ' + self.surname))
         self.pushButton_3.clicked.connect(self.clickBtn3)
@@ -880,7 +939,8 @@ class TeacherCheckInquary(QMainWindow):
         self.le.move(130, 22)
 
     def clickBtn(self):
-        ava = str(self.cur1.execute(f"""SELECT avatarfile from teachers WHERE teacherlogin='{self.teacher}'""").fetchone()[0])
+        ava = str(self.cur1.execute(
+            f"""SELECT avatarfile from teachers WHERE teacherlogin='{self.teacher}'""").fetchone()[0])
         pixmap = QPixmap(ava)
         self.label_5.setPixmap(pixmap)
         self.label_5.setFixedSize(60, 60)
@@ -904,7 +964,8 @@ class TeacherCheckInquary(QMainWindow):
 
     # При отклонении заявки, учитель пишет причину отказа
     def approveInquary2(self):
-        text, ok = QInputDialog.getText(self, 'Отклонить', 'Введите причину отказа:')
+        text, ok = QInputDialog.getText(
+            self, 'Отклонить', 'Введите причину отказа:')
 
         if ok:
             self.le.setText(str(text))
@@ -922,6 +983,7 @@ class TeacherCheckInquary(QMainWindow):
     def clickBtn5(self):
         sys.exit()
 
+
 class FileLoad(QWidget):
     def __init__(self, teacher, information):
         super().__init__()
@@ -934,8 +996,10 @@ class FileLoad(QWidget):
         self.information = information
         self.users = sqlite3.connect('db/users.sqlite')
         self.cur1 = self.users.cursor()
-        self.inf = self.cur1.execute(f"SELECT * from teachers where teacherlogin='{self.teacher}'").fetchone()
-        self.inf2 = self.cur1.execute(f"SELECT * from users where pupillogin='{self.information[1]}'").fetchone()
+        self.inf = self.cur1.execute(
+            f"SELECT * from teachers where teacherlogin='{self.teacher}'").fetchone()
+        self.inf2 = self.cur1.execute(
+            f"SELECT * from users where pupillogin='{self.information[1]}'").fetchone()
         self.teacher_name = ' '.join([self.inf[0], self.inf[1], self.inf[2]])
         self.pupil_name = ' '.join([self.inf2[3], self.inf2[2]])
         self.lesson_num = self.information[3]
@@ -959,7 +1023,8 @@ class FileLoad(QWidget):
 
         doc.render(context)
         doc.save("res.docx")
-        msg = QMessageBox(QMessageBox.Information, '', 'Файл "res.docx" успешно скачан.', parent=self)
+        msg = QMessageBox(QMessageBox.Information, '',
+                          'Файл "res.docx" успешно скачан.', parent=self)
         msg.show()
         self.hide()
         self.a = TeacherEntrance(self.teacher)
